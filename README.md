@@ -18,3 +18,14 @@ Limitation: [Edge don't support bookmarks WebExtension API](https://developer.mo
 Note: WebDeveloper tools network tab display original header (as defined before addon rewrite it).
 
 Note: Does browsers have a internal limit (client side) for header length?
+
+More infos:
+
+- [233903 - CSP: Bookmarklets should bypass pages' policies. - chromium - Monorail](https://bugs.chromium.org/p/chromium/issues/detail?id=233903)
+- [866522 – Bookmarklets affected by CSP](https://bugzilla.mozilla.org/show_bug.cgi?id=866522)
+- [Bug 149000 – Some extensions triggers CSP violation reports](https://bugs.webkit.org/show_bug.cgi?id=149000)
+- [Bookmarklets are Dead… – Making Instapaper – Medium](https://medium.com/making-instapaper/bookmarklets-are-dead-d470d4bbb626)
+- [Mixed Content Blocking and Content-Security-Policy Block Bookmarklets](http://wayback.archive.org/web/20160606115944/http://browserfame.com/1517/mixed-content-blocking-and-content-security-policy-block-bookmarklets)
+- [Greasemonkey accessed by Bookmarklets - Google Groups](https://groups.google.com/forum/#!msg/greasemonkey-users/mw61Ynw5ORc/Gl_BNUhtSq0J)
+- [security - How to disable CSP in Firefox for just bookmarklets? - Super User](http://superuser.com/questions/586063/how-to-disable-csp-in-firefox-for-just-bookmarklets)
+- [Content Security Policy](https://github.com/blog/1477-content-security-policy#bookmarklets)
