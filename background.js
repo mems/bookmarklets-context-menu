@@ -217,12 +217,18 @@ function rewriteCSPHeader(details){
 		let sourceList = new Set(directives.get(CSP_SCRIPT_SRC).split(WSP));
 		sourceList.delete("");// remove empty sources (because start and/or end with WSP)
 		sourceList.delete(CSP_SRC_NONE);// remove none source, because we have sources
+		let hasHashOrNonce;// if at least one hash or one nonce if defined
+		{
+			let prefixes = ["'nonce-"];
+			HASH_ALGORITHMS.forEach((value, key) => prefixes.push(`'${key}-`));
+			
+			hasHashOrNonce = !!Array.from(sourceList).find(source => prefixes.find(prefix => source.startsWith(prefix)));
+		}
 		
 		// Some keywords allow javascript scheme
 		// If both unsafe-inline and a nonce or a hash are defined, all inline scripts must have a nonce or a hash,
 		// see https://www.w3.org/TR/CSP2/#directive-script-src
-		
-		if(sourceList.has("*") || sourceList.has(CSP_UNSAFE_INLINE)){
+		if(sourceList.has(CSP_UNSAFE_INLINE) && !hasHashOrNonce){
 			return response;
 		}
 	
@@ -231,12 +237,11 @@ function rewriteCSPHeader(details){
 			sourceList.add(sourceHash);
 		}
 	
-		directives.set(CSP_SCRIPT_SRC, Array.from(sourceList.values()).join(" "));// update script-src directive
+		directives.set(CSP_SCRIPT_SRC, Array.from(sourceList).join(" "));// update script-src directive
 		let directiveList = [];
 		directives.forEach((value, name) => directiveList.push(`${name} ${value}`));//reduce map to array
 		
-		console.info(`CSP update on ${details.url}`);
-		console.log(`${cspHeader.value}\n→\n${directiveList.join(";")}`)
+		console.info(`CSP update for ${details.url}:\n${cspHeader.value}\n→\n${directiveList.join(";")}`);
 		
 		cspHeader.value = directiveList.join(";");// update the CSP header's value
 	
