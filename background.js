@@ -257,7 +257,7 @@ browser.webRequest.onHeadersReceived.addListener(
 	rewriteCSPHeader,
 	{
 		urls: ["*://*/*"],
-		types: ["main_frame", "sub_frame"]
+		types: ["main_frame", "sub_frame"]/*What about SVGs?*/
 	},
 	["blocking", "responseHeaders"]
 );
