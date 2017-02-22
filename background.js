@@ -1,5 +1,7 @@
 "use strict";
 
+var browser = browser || chrome;//for Chrome
+
 const utf8Encoder = new TextEncoder();
 const utf8Decoder = new TextDecoder("utf-8");
 
