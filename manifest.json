@@ -5,9 +5,6 @@
   "version": "1.0",
   "description": "Overwrite CSP to allow bookmarklets",
   "homepage_url": "https://github.com/mems/csp-for-bookmarklets",
-  "icons": {
-    "48": "icons/bookmarklet-48.png"
-  },
   
   "background": {
     "scripts": ["background.js"]
