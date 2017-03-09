@@ -1,0 +1,41 @@
+{
+  "extensionName": {
+    "message": "Menu contextuel de bookmarklets",
+    "description": "Name of the extension."
+  },
+  
+  "extensionDescription": {
+    "message": "Ajoute un menu contextuel contenant tous les bookmarklets",
+    "description": "Description of the add-on."
+  },
+  
+  "contextMenuItemRoot": {
+    "message": "Bookmarklets",
+    "description": "Title of root context menu item."
+  },
+  
+  "contextMenuItemEmpty": {
+    "message": "Aucun bookmarklets trouvé",
+    "description": "Title of context menu item in submenu if no bookmarklet founded."
+  },
+  
+  "contextMenuItemUntitled": {
+    "message": "Sans titre",
+    "description": "Title of context menu item without title."
+  },
+  
+  "optionsOptionsFieldset": {
+    "message": "Options",
+    "description": "Options fieldset legend"
+  },
+  
+  "optionsFlatContextMenuChkLabel": {
+    "message": "Ne pas afficher les dossiers",
+    "description": "Options flat context menu checkbox label"
+  },
+  
+  "optionsSaveButton": {
+    "message": "Sauvegarder",
+    "description": "Options save button"
+  }
+}

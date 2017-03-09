@@ -2,264 +2,248 @@
 
 var browser = browser || chrome;//for Chrome
 
-const utf8Encoder = new TextEncoder();
-const utf8Decoder = new TextDecoder("utf-8");
+const CONTEXT_MENU_ITEM_ROOT_ID = "root";
+const CONTEXT_MENU_ITEM_EMPTY_ID = "empty";
+const CONTEXT_MENU_ITEM_UNTITLED = browser.i18n.getMessage("contextMenuItemUntitled");
+const FOLDERS_GROUP_TITLES_SEP = " ▸ ";
+const BOOKMARK_TREE_CHANGES_EVENTS = ["onCreated", "onRemoved", "onChanged", "onMoved", "onChildrenReordered"];
+const BOOKMARK_TREE_CHANGES_DELAY = 1000;//ms
+const PREF_FLAT_CONTEXT_MENU = "flatContextMenu";
 
-const HASH_ALGORITHMS = new Map([
-	["sha256", {byteLength: 32, cryptoID: "SHA-256"}],
-	["sha384", {byteLength: 48, cryptoID: "SHA-384"}],
-	["sha512", {byteLength: 64, cryptoID: "SHA-512"}],
-]);
+//browser.runtime.lastError
 
-const DEFAULT_SOURCE_HASH_ALGO = "sha256";// see HASH_ALGORITHMS
-
-// Use search({}) to get all bookmark nodes instead of tree traversal (using browser.bookmarks.getTree() + https://en.wikipedia.org/wiki/Tree_traversal)
-let gettingBookmarkletSourceHashes = browser.bookmarks.search({}).then(filterBookmarklets).then(bookmarklets => getBookmarkletSourceHashes(bookmarklets, DEFAULT_SOURCE_HASH_ALGO));
-let randomBytes = new Uint8Array(HASH_ALGORITHMS.get(DEFAULT_SOURCE_HASH_ALGO).byteLength);// will be filled with random bytes to generate fake source hashes
-
-// See https://tools.ietf.org/html/rfc5234#appendix-B.1
-// and https://www.w3.org/TR/CSP2/#source-list-syntax
-const CSP_HEADER = "Content-Security-Policy"
-const WSP = /[ \t]+/;// space or horizontal space
-const EMPTY_TOKEN = /^[ \t]*$/;
-/*
-^
-[\t ]*                                        // *WSP
-([a-zA-Z0-9\-]+)                              // directive-name
-(?:[\t ]([\t\x20-\x2b\x2d-\x3A\x3C-\x7E]*))?  // [ WSP directive-value ]
-$
-*/
-const CSP_DIRECTIVE_TOKEN = /^[\t ]*([a-zA-Z0-9\-]+)(?:[\t ]([\t\x20-\x2b\x2d-\x3A\x3C-\x7E]*))?$/;
-const CSP_SCRIPT_SRC = "script-src";
-const CSP_DEFAULT_SRC = "default-src";
-// Some keywords:
-const CSP_SRC_NONE = "'none'";
-const CSP_UNSAFE_INLINE = "'unsafe-inline'";
-
-/**
- * Get source hash (as it's used in CSP) from hash bytes (generated from a digest function
- * @see https://www.w3.org/TR/CSP2/#hash_source
- */
-function getSourceHashFromHashBytes(hashBytes, algo = "sha512"){
-	hashBytes = new Uint8Array(hashBytes);
-	let hashAlgo = HASH_ALGORITHMS.get(algo);
-	if(!hashAlgo){
-		throw new Error(`Unsupported hash algorithm "${algo}"`);
+class Bookmarklet{
+	constructor(source = "", title = ""){
+		this.source = source;
+		this.title = title;
 	}
-	
-	if(hashBytes.length != hashAlgo.byteLength){
-		throw new Error(`Invalid hash length: ${hashBytes.length}B (required: ${hashAlgo.byteLength}B)`);
+}
+
+class BookmarkletFolder{
+	constructor(children = [], title = ""){
+		this.children = children;
+		this.title = title;
 	}
-	
-	let valueChars = hashBytes.reduce((chars, byte) => (chars += String.fromCharCode(byte), chars), "");// to UTF-8
-	let base64Value = btoa(valueChars);
-	return "'" + algo + "-" + base64Value + "'";// "'" hash-algo "-" base64-value "'"
+}
+
+class BookmarkletFolderGroup extends BookmarkletFolder{
+	constructor(folders = [], children = [], title = ""){
+		super(children, title);
+		this.folders = folders;
+	}
 }
 
 /**
- * Get source hash from source
- * @param source String Source text to get hash
- * @param algo Hash algorithm. All CSP2 allowed algorithms: "sha256" / "sha384" / "sha512". See https://www.w3.org/TR/CSP2/#hash_algo
- * @example getSourceHash("alert('Hello, world.');"); // resolve as "'sha256-qznLcsROx4GACP2dm0UCKCzCG+HiZ1guq6ZZDob/Tng='"
- * @returns Promise
+ * Create bookmarklet tree from given bookmark
+ * @returns {Bookmarklet|BookmarkletFolder|BookmarkletFolderGroup|null}
  */
-function getSourceHash(source, algo = "sha512"){
-	let hashAlgo = HASH_ALGORITHMS.get(algo);
-	if(!hashAlgo){
-		throw new Error(`Unsupported hash algorithm "${algo}"`);
-	}
+function getBookmarkletTree(bookmark){
+	let title = bookmark.title || CONTEXT_MENU_ITEM_UNTITLED;
 	
-	let sourceBytes = utf8Encoder.encode(source);
-	return crypto.subtle.digest(hashAlgo.cryptoID, sourceBytes).then(valueBuffer => getSourceHashFromHashBytes(valueBuffer, algo));
-}
-
-/**
- * Get only bookmarklets (starting with javascript protocol)
- */
-function filterBookmarklets(bookmarkNodes){
-	let bookmarkletNodes = [];
-	for(let node of bookmarkNodes){
-		let url = node.url;
+	// If not a folder
+	if(!bookmark.children){
+		let url = bookmark.url;
 		if(url && url.startsWith("javascript:")){
-			bookmarkletNodes.push(node);
+			let source;
+			try{
+				source = decodeURIComponent(url.slice(11)).trim()
+			}catch(error){}
+			
+			if(source){
+				return new Bookmarklet(source, title);
+			}
 		}
+		
+		return null;
 	}
-	return bookmarkletNodes;
+	
+	let children = bookmark.children.map(getBookmarkletTree).filter(value => value !== null);
+	if(children.length == 0){
+		return null;
+	}
+	
+	let folder = new BookmarkletFolder(children, title);
+	
+	// Nested folders
+	if(children.length == 1 && children[0] instanceof BookmarkletFolder){
+		let solitaryFolder = children[0];
+		
+		// Already a group
+		if(solitaryFolder instanceof BookmarkletFolderGroup){
+			folder.children[0] = solitaryFolder.folders[0];// fix the tree
+			solitaryFolder.folders.unshift(folder);// group that folder too
+			solitaryFolder.title = solitaryFolder.folders.map(folder => folder.title).join(FOLDERS_GROUP_TITLES_SEP);
+			return solitaryFolder;
+		}
+		
+		return new BookmarkletFolderGroup([folder, solitaryFolder], solitaryFolder.children, folder.title + FOLDERS_GROUP_TITLES_SEP + solitaryFolder.title);
+	}
+	
+	return folder;
 }
 
 /**
- * Get source hashes of given bookmarks and the algorithm to use
- * @param bookmarklets Array
- * @param algo String
- * @see https://html.spec.whatwg.org/multipage/browsers.html#navigating-across-documents:javascript-protocol
- * @returns Promise Resolved with an new array of hashes
+ * Handle context menu click event
+ * Execute corresponding bookmarklet script
  */
-function getBookmarkletSourceHashes(bookmarklets, algo = "sha512"){
-	let hashesPromises = [];
-	for(let bookmarklet of bookmarklets){
-		let url = bookmarklet.url;
-		let source = "";
-		// folder or non "javascript:" URI = empty source
-		if(url && url.startsWith("javascript:")){
-			source = decodeURIComponent(url.slice(11));
+function contextMenuItemClick(bookmarklet, data, tab){
+	/*
+	executeScript can be rejected for host mismatch: "Error: No window matching {"matchesHost":[]}"
+	or privilegied URIs like: chrome://* *://addons.mozilla.org/
+	See https://bugzilla.mozilla.org/show_bug.cgi?id=1310082
+	
+	executeScript can be rejected for script error (syntax or privilege)
+	*/
+	browser.tabs.executeScript({
+		code: bookmarklet.source,
+		runAt: "document_start"
+	}).then(framesReturnValues => {
+		let topFrameRetunValue = framesReturnValues[0];
+		// top frame retunValue is undefined (void)
+		if(topFrameRetunValue === undefined){
+			// Do nothing
+			return;
 		}
-		
-		hashesPromises.push(getSourceHash(source, algo));
-	}
-	//hashesPromises.push(getSourceHash("alert('Hello, world.');", algo));
-	return Promise.all(hashesPromises);
-}
-
-/**
- * Get bookmarklet + random source hashes
- * @returns Array The provided sourceHashes array with new random hashes (see count) added to the end
- */
-function addRandomSourceHashes(sourceHashes, algo = "sha512", count = 10){
-	let hashAlgo = HASH_ALGORITHMS.get(algo);
-	if(!hashAlgo){
-		throw new Error(`Unsupported hash algorithm "${algo}"`);
-	}
-	
-	if(randomBytes.length != hashAlgo.byteLength){
-		throw new Error(`randomBytes length don't match algo: ${randomBytes.length}B (required: ${hashAlgo.byteLength}B)`);
-	}
-	
-	for(let i = 0; i < count; i++){
-		crypto.getRandomValues(randomBytes);// fill with random to fake a hash bytes
-		sourceHashes.push(getSourceHashFromHashBytes(randomBytes, algo));
-	}
-	
-	return sourceHashes;
-}
-
-/**
- * Suffle array elements. Aka randomize, random permutation. Use Fisher–Yates shuffle
- * @see https://bost.ocks.org/mike/shuffle/
- * @see https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
- * @returns Array The provided array with all elements shuffled
- */
-function shuffle(array) {
-	let index = array.length;
-	
-	// While there remain elements to shuffle…
-	while (index) {
-		// Pick a remaining element…
-		let destIndex = Math.floor(Math.random() * index--);
-		
-		// And swap it with the current element.
-		let current = array[index];
-		array[index] = array[destIndex];
-		array[destIndex] = current;
-	}
-	
-	return array;
-}
-
-/*
- * Rewrite the CSP header.
- * @see https://www.w3.org/TR/CSP2/#policy-syntax
- * @see https://tools.ietf.org/html/rfc5234 RFC 5234 - Augmented BNF for Syntax Specifications: ABNF
- */
-function rewriteCSPHeader(details){
-	let responseHeaders = details.responseHeaders;
-	let cspHeaderNameLower = CSP_HEADER.toLowerCase();
-	let cspHeader = responseHeaders.find(header => header.name.toLowerCase() == cspHeaderNameLower);// Find the first CSP header, case insensitive
-	let response = {responseHeaders};
-	
-	// Ignore the rest if no CSP header is founded
-	if(!cspHeader){
-		return response;
-	}
-	
-	return gettingBookmarkletSourceHashes.then(sourceHashes => {
-		// If no hashes, ignore below
-		if(sourceHashes.length == 0){
-			return response;
-		}
-		
-		// Add random hashes + suffle
-		sourceHashes = shuffle(addRandomSourceHashes(sourceHashes, DEFAULT_SOURCE_HASH_ALGO, Math.round(Math.random() * 50)));
-		
-		let value = cspHeader.value;//or cspHeader.binaryValue?
-		let directives = value.split(";").reduce((directives, token) => {
-			// Don't generate parse error
-		
-			// Empty token, skip
-			if(EMPTY_TOKEN.test(token)){
-				return directives;
-			}
-		
-			let directiveParseResult = CSP_DIRECTIVE_TOKEN.exec(token);
-			// Invalid directive
-			if(!directiveParseResult){
-				return directives;
-			}
-		
-			let [, directiveName = "", directiveValue = ""] = directiveParseResult;
-			directiveName = directiveName.toLowerCase();
-		
-			if(directiveName != "" && !directives.has(directiveName)){
-				directives.set(directiveName, directiveValue);
-			}
 			
-			return directives;
-		}, new Map());
-	
-		// If script-src is not define, should use the same value as default-src https://www.w3.org/TR/CSP2/#directive-default-src
-		if(!directives.has(CSP_SCRIPT_SRC)){
-			// Ignore below, because both default-src and script-src are not defined (ex: "content-security-policy: upgrade-insecure-requests"), means all sources are allowed
-			if(!directives.has(CSP_DEFAULT_SRC)){
-				return response;
-			}
-			
-			directives.set(CSP_SCRIPT_SRC, directives.get(CSP_DEFAULT_SRC) || "");
-		}
-	
-		// Parse script-src source list
-		let sourceList = new Set(directives.get(CSP_SCRIPT_SRC).split(WSP));
-		sourceList.delete("");// remove empty sources (because start and/or end with WSP)
-		sourceList.delete(CSP_SRC_NONE);// remove none source, because we have sources
-		let hasHashOrNonce;// if at least one hash or one nonce if defined
-		{
-			let prefixes = ["'nonce-"];
-			HASH_ALGORITHMS.forEach((value, key) => prefixes.push(`'${key}-`));
-			
-			hasHashOrNonce = !!Array.from(sourceList).find(source => prefixes.find(prefix => source.startsWith(prefix)));
-		}
-		
-		// Some keywords allow javascript scheme
-		// If both unsafe-inline and a nonce or a hash are defined, all inline scripts must have a nonce or a hash,
-		// see https://www.w3.org/TR/CSP2/#directive-script-src
-		if(sourceList.has(CSP_UNSAFE_INLINE) && !hasHashOrNonce){
-			return response;
-		}
-	
-		// Append all hashes to script-src directive source list
-		for(let sourceHash of sourceHashes){
-			sourceList.add(sourceHash);
-		}
-	
-		directives.set(CSP_SCRIPT_SRC, Array.from(sourceList).join(" "));// update script-src directive
-		let directiveList = [];
-		directives.forEach((value, name) => directiveList.push(`${name} ${value}`));//reduce map to array
-		
-		console.info(`CSP update for ${details.url}:\n${cspHeader.value}\n→\n${directiveList.join(";")}`);
-		
-		cspHeader.value = directiveList.join(";");// update the CSP header's value
-	
-		return response;
+		// Redirect to document generated by the result of evaluated script
+		// We can't use browser.tabs.update({url}) because data: URI aren't allowed
+		return browser.tabs.executeScript({
+			code: `location = "data:text/html;charset=utf-8,${encodeURIComponent(topFrameRetunValue)}";`,
+			runAt: "document_start"
+		});
 	});
 }
 
-/*
-Add rewriteCSPHeader as a listener to onHeadersReceived, only for the target page.
-Make it "blocking" so we can modify the response headers.
-*/
-browser.webRequest.onHeadersReceived.addListener(
-	rewriteCSPHeader,
-	{
-		urls: ["*://*/*"],
-		types: ["main_frame", "sub_frame"]/*What about SVGs?*/
-	},
-	["blocking", "responseHeaders"]
-);
+/**
+ * Create all context menu for the given bookmarklet tree
+ */
+function createAllContextMenuItems(bookmarklets, flat = false){
+	// Remove all remains context menu
+	browser.contextMenus.removeAll();
+	
+	let bookmarkletsRoot = bookmarklets[0];
+	// add root context menu
+	let parentID = browser.contextMenus.create({
+		id: CONTEXT_MENU_ITEM_ROOT_ID,
+		title: browser.i18n.getMessage("contextMenuItemRoot"),
+		contexts: ["all"]
+	});
+
+	// If no bookmarklets
+	if(!bookmarkletsRoot || bookmarkletsRoot instanceof BookmarkletFolder && bookmarkletsRoot.children.length == 0){
+		browser.contextMenus.create({
+			id: CONTEXT_MENU_ITEM_EMPTY_ID,
+			title: browser.i18n.getMessage("contextMenuItemEmpty"),
+			parentId: parentID,
+			contexts: ["all"]
+		});
+		return;
+	}
+
+	// If only one folder (or folder group) list direcly its children
+	if(bookmarkletsRoot instanceof BookmarkletFolder){
+		bookmarkletsRoot.children.map(child => createContextMenuItems(child, parentID, flat));
+	} else {
+		createContextMenuItems(bookmarkletsRoot, parentID, flat);
+	}
+}
+
+/**
+ * Create a context menu entry for the given bookmarklet
+ */
+function createContextMenuItems(bookmarklet, parentContextMenuID, flat = false){
+	if(bookmarklet instanceof BookmarkletFolder){
+		let parentID = parentContextMenuID;
+		if(!flat){
+			parentID = browser.contextMenus.create({
+				title: bookmarklet.title,
+				parentId: parentContextMenuID,
+				contexts: ["all"]
+			});
+		}
+		bookmarklet.children.map(child => createContextMenuItems(child, parentID, flat));
+		return;
+	}
+	
+	let contextMenuId = browser.contextMenus.create({
+		title: bookmarklet.title,
+		parentId: parentContextMenuID,
+		onclick: contextMenuItemClick.bind(null, bookmarklet),
+		contexts: ["all"]
+	});
+}
+
+/**
+ * Build or rebuild the context menu
+ * @returns Promise
+ */
+function updateContextMenu(){
+	return browser.storage.local.get(PREF_FLAT_CONTEXT_MENU).then(result => {
+		let flat = Boolean(result[PREF_FLAT_CONTEXT_MENU]);
+		return gettingBookmarkletTree.then(bookmarklets => createAllContextMenuItems(bookmarklets, flat));
+	})
+}
+
+/**
+ * Update all data: the bookmarklet tree and context menu items
+ * @returns Promise
+ */
+function update(){
+	gettingBookmarkletTree = browser.bookmarks.getTree().then(bookmarks => [getBookmarkletTree(bookmarks[0])]);
+	return updateContextMenu();
+}
+
+/**
+ * Bookmark tree events handler throttle / debounce function
+ */
+function updateDebounced(){
+	if(updateTimeoutID){
+		// Wait to update timeout
+		return;
+	}
+	
+	updateTimeoutID = setTimeout(() => {
+		updateTimeoutID = 0;
+		update.apply(this);
+	}, BOOKMARK_TREE_CHANGES_DELAY);
+}
+
+let updateTimeoutID = 0;
+let gettingBookmarkletTree = null//Promise.reject("Not initialized");
+
+// Inert context menu (disabled). Wait bookmarks retrival
+browser.contextMenus.create({
+	id: CONTEXT_MENU_ITEM_ROOT_ID,
+	title: browser.i18n.getMessage("contextMenuItemRoot"),
+	contexts: ["all"],
+	enabled: false
+});
+
+// Add bookmark tree changes event listeners
+// Don't handle onImportBegan and onImportEnded, but because we debounce (delay) update, it should be fine
+{
+	const bookmarks = browser.bookmarks;
+	for(let event of BOOKMARK_TREE_CHANGES_EVENTS){
+		// Event not supported
+		if(!(event in bookmarks) || typeof bookmarks[event].addListener != "function"){
+			continue;
+		}
+		
+		bookmarks[event].addListener(updateDebounced);
+	}
+}
+
+update();
+
+// Listen preferences changes
+browser.storage.onChanged.addListener((changes, areaName) => {
+	// Ignore all others storage areas
+	if(areaName != "local"){
+		return;
+	}
+	
+	let flatPrefChange = changes[PREF_FLAT_CONTEXT_MENU];
+	if(flatPrefChange && flatPrefChange.oldValue != flatPrefChange.newValue){
+		updateContextMenu();
+	}
+})

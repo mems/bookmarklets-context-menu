@@ -1,10 +1,12 @@
 {
 
   "manifest_version": 2,
-  "name": "CSP for Bookmarklets",
   "version": "1.0",
-  "description": "Overwrite CSP to allow bookmarklets",
-  "homepage_url": "https://github.com/mems/csp-for-bookmarklets",
+  "name": "__MSG_extensionName__",
+  "description": "__MSG_extensionDescription__",
+  "default_locale": "en",
+  "homepage_url": "https://github.com/mems/bookmarklets-context-menu",
+
   
   "background": {
     "scripts": ["background.js"]
@@ -12,10 +14,15 @@
   
   "permissions": [
     "bookmarks",
-    "webRequest",
-    "webRequestBlocking",
-    "http://*/*",
-    "https://*/*"
-  ]
+    "contextMenus",
+    "activeTab",
+    "clipboardWrite",
+    "storage",
+    "<all_urls>"
+  ],
 
+  "options_ui": {
+      "page": "options/options.html",
+      "browser_style": true
+  }
 }

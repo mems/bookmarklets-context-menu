@@ -1,0 +1,41 @@
+{
+  "extensionName": {
+    "message": "Bookmarklets context menu",
+    "description": "Name of the extension."
+  },
+  
+  "extensionDescription": {
+    "message": "Add a context menu item contains all bookmarklets",
+    "description": "Description of the add-on."
+  },
+  
+  "contextMenuItemRoot": {
+    "message": "Bookmarklets",
+    "description": "Title of root context menu item."
+  },
+  
+  "contextMenuItemEmpty": {
+    "message": "No bookmarklets founded",
+    "description": "Title of context menu item in submenu if no bookmarklet founded."
+  },
+  
+  "contextMenuItemUntitled": {
+    "message": "Untitled",
+    "description": "Title of context menu item without title."
+  },
+  
+  "optionsOptionsFieldset": {
+    "message": "Options",
+    "description": "Options fieldset legend"
+  },
+  
+  "optionsFlatContextMenuChkLabel": {
+    "message": "Use flat context menu",
+    "description": "Options flat context menu checkbox label"
+  },
+  
+  "optionsSaveButton": {
+    "message": "Save",
+    "description": "Options save button"
+  }
+}
