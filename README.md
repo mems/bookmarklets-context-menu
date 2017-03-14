@@ -47,4 +47,4 @@ If the result of the bookmarklet is other than `undefined` (`void 0`), it will b
 
 An example of a bookmarklet that copy the document's title (`document.title`):
 
-	javascript:(s=>{let%20d=document,l=e=>{d.removeEventListener("copy",l);e.preventDefault();e.clipboardData.setData("text/plain",s);};d.addEventListener("copy",l);d.execCommand("copy")})(document.title)
+	javascript:(s=>{let%20d=document,a=d.activeElement,l=e=>{d.removeEventListener("copy",l);e.preventDefault();e.clipboardData.setData("text/plain",s);};d.body.focus();d.addEventListener("copy",l);d.execCommand("copy");a.focus()})(document.title)
