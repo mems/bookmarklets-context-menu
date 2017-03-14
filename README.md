@@ -48,3 +48,19 @@ If the result of the bookmarklet is other than `undefined` (`void 0`), it will b
 An example of a bookmarklet that copy the document's title (`document.title`):
 
 	javascript:(s=>{let%20d=document,a=d.activeElement,l=e=>{d.removeEventListener("copy",l);e.preventDefault();e.clipboardData.setData("text/plain",s);};d.body.focus();d.addEventListener("copy",l);d.execCommand("copy");a.focus()})(document.title)
+
+An example of a bookmarklet that copy the document as [Markdown link](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#links):
+
+	javascript:{let%20d=document,a=d.activeElement,u=d.URL,t="head%20title,h1,h2".split(",").map(s=>d.querySelector(s)).reduce((a,e)=>a||e&&e.textContent.replace(/\s+/g,"%20").trim(),"")||u,z=u.replace(/\(/g,"%2528").replace(/\)/g,"%2529"),l=e=>{let%20c=e.clipboardData,s=c.setData.bind(c);d.removeEventListener("copy",l);e.preventDefault();c.clearData();s("text/x-moz-url",u);s("text/uri-list",u);s("text/html",`<a%20href="${u}">${t.replace(/[&<>"']/g,m=>`&${{"&":"amp","<":"lt",">":"gt",'"':"quot","'":"apos"}[m]};`)}</a>`);s("text/plain",t==u?z:`[${t.replace(/([<>\[\]])/g,"\\$1")}](${z})`)};d.documentElement.focus();d.addEventListener("copy",l);d.execCommand("copy");a.focus()}
+
+If you need `document.execCommand()` you need to be sure the active element (`document.activeElement`) is not an iframe:
+
+	let lastActiveElement = document.activeElement;// save current active element
+	document.documentElement.focus();// focus the html element, should work with any other non iframe elements
+	let listener = event => {
+		document.removeEventListener("copy", listener);// one time listener
+		// Do whaterver you want. Exemple: in copy event, use event.clipboardData
+	};
+	document.addEventListener("copy", listener);
+	document.execCommand("copy");// will dispatch copy event
+	lastActiveElement.focus();// restore previous active element (any focusable element like input, element with tabIndex, scrollable element, etc.)
