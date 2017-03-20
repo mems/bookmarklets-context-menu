@@ -1,3 +1,5 @@
+![Firefox capture of Bookmarklets context menu: Context menu opened with a folder and a bookmarklet "Copy page as Markdown link"](capture_firefox_desktop.png)
+
 ## Why use Bookmarklets context menu
 
 [Current browsers' implementations of bookmarklets are broken](#why-current-browsers-implementations-of-bookmarklets-are-broken): bookmarklet are executed as author's script, but should be executed as user's scripts (with higher pivileges).
@@ -49,7 +51,7 @@ An example of a bookmarklet that copy the document's title (`document.title`):
 
 	javascript:(s=>{let%20d=document,l=e=>{d.removeEventListener("copy",l);e.preventDefault();e.clipboardData.setData("text/plain",s);};if(d.activeElement.tagName=="IFRAME"){let%20s=d.createElement("span");s.tabIndex=-1;s.style.position="fixed";d.body.appendChild(s);s.focus();s.remove()}d.addEventListener("copy",l);d.execCommand("copy");a.focus()})(document.title)
 
-An example of a bookmarklet that copy the document as [Markdown link](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#links):
+An example of a bookmarklet that copy the page as [Markdown link](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#links):
 
 	javascript:{let%20d=document,u=d.URL,t="head%20title,h1,h2".split(",").map(s=>d.querySelector(s)).reduce((a,e)=>a||e&&e.textContent.replace(/\s+/g,"%20").trim(),"")||u,z=u.replace(/\(/g,"%2528").replace(/\)/g,"%2529"),l=e=>{let%20c=e.clipboardData,s=c.setData.bind(c);d.removeEventListener("copy",l);e.preventDefault();c.clearData();s("text/x-moz-url",u);s("text/uri-list",u);s("text/html",`<a%20href="${u}">${t.replace(/[&<>"']/g,m=>`&${{"&":"amp","<":"lt",">":"gt",'"':"quot","'":"apos"}[m]};`)}</a>`);s("text/plain",t==u?z:`[${t.replace(/([<>\[\]])/g,"\\$1")}](${z})`)};if(d.activeElement.tagName=="IFRAME"){let%20s=d.createElement("span");s.tabIndex=-1;s.style.position="fixed";d.body.appendChild(s);s.focus();s.remove()}d.addEventListener("copy",l);d.execCommand("copy");void(0)}
 
