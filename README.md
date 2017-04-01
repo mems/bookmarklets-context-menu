@@ -4,11 +4,11 @@
 
 [Current browsers' implementations of bookmarklets are broken](#why-current-browsers-implementations-of-bookmarklets-are-broken): bookmarklet are executed as author's script, but should be executed as user's scripts (with higher pivileges).
 
-To circumvent restrictions, the extenxion _Bookmarklets context menu_ create a context menu with all bookmarklets available from user's bookmarks and executed it on demand as [content script](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Content_scripts). This allow an access to a secured isolated environement, with higher privileges than author's scripts.
+To circumvent this restrictions, the extension _Bookmarklets context menu_ create a context menu with all bookmarklets available from user's bookmarks and executed it on demand as [content script](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Content_scripts). This allow access to a secured isolated environement, with higher privileges than author's scripts.
 
 This context is defined as:
 
-- `this` (global) is an extended `Window` object, include a small subset of WebExtension APIs and [DOM object `wrappedJSObject` property](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Content_scripts#Accessing_page_script_objects_from_content_scripts): `Sandbox{browser, chrome, ...window}`
+- `this` (global) is an extended `Window` object, include a small subset of WebExtension APIs and [DOM object `wrappedJSObject` property](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Content_scripts#Accessing_page_script_objects_from_content_scripts): `const Sandbox = {browser, chrome, ...window}`
 - `self` is the same as `window`, the top frame's global object
 
 ## Why current browsers' implementations of bookmarklets are broken?
