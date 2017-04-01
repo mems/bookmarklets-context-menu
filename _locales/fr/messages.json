@@ -16,7 +16,7 @@
   
   "contextMenuItemEmpty": {
     "message": "Aucun bookmarklets trouvé",
-    "description": "Title of context menu item in submenu if no bookmarklet founded."
+    "description": "Title of context menu item in submenu if no bookmarklet found."
   },
   
   "contextMenuItemUntitled": {
