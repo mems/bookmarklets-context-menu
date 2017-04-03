@@ -1,6 +1,6 @@
 ![Firefox capture of Bookmarklets context menu: Context menu opened with a folder and a bookmarklet "Copy page as Markdown link"](capture_firefox_desktop.png)
 
-This extension is available for [Firefox (via AMO)](https://addons.mozilla.org/en-US/firefox/addon/bookmarklets-context-menu/)
+This extension is available for [Firefox (via AMO)](https://addons.mozilla.org/firefox/addon/bookmarklets-context-menu/)
 
 ## Why use Bookmarklets context menu
 
