@@ -140,32 +140,58 @@ function createAllContextMenuItems(bookmarklets, flat = false){
 		return;
 	}
 
+	let emptyParent = true;
 	// If only one folder (or folder group) list direcly its children
 	if(bookmarkletsRoot instanceof BookmarkletFolder){
-		bookmarkletsRoot.children.map(child => createContextMenuItems(child, parentID, flat));
+		for(let child of bookmarkletsRoot.children){
+			createContextMenuItems(child, parentID, flat, emptyParent);
+			emptyParent = true;
+		}
 	} else {
-		createContextMenuItems(bookmarkletsRoot, parentID, flat);
+		createContextMenuItems(bookmarkletsRoot, parentID, flat, emptyParent);
 	}
 }
 
 /**
  * Create a context menu entry for the given bookmarklet
  */
-function createContextMenuItems(bookmarklet, parentContextMenuID, flat = false){
+function createContextMenuItems(bookmarklet, parentContextMenuID, flat = false, emptyParent = true){
+	// If a folder of bookmarklets
 	if(bookmarklet instanceof BookmarkletFolder){
 		let parentID = parentContextMenuID;
+		let children = bookmarklet.children;
+		
+		if(children.length == 0){
+			return;
+		}
+		
 		if(!flat){
 			parentID = browser.contextMenus.create({
 				title: bookmarklet.title,
 				parentId: parentContextMenuID,
 				contexts: ["all"]
 			});
+			emptyParent = true;
 		}
-		bookmarklet.children.map(child => createContextMenuItems(child, parentID, flat));
+		
+		if(flat && emptyParent){
+			browser.contextMenus.create({
+				type: "separator",
+				parentId: parentContextMenuID,
+				contexts: ["all"]
+			});
+			emptyParent = false;
+		}
+		
+		for(let child of children){
+			createContextMenuItems(child, parentID, flat, emptyParent);
+			emptyParent = true;
+		}
+		
 		return;
 	}
 	
-	let contextMenuId = browser.contextMenus.create({
+	browser.contextMenus.create({
 		title: bookmarklet.title,
 		parentId: parentContextMenuID,
 		onclick: contextMenuItemClick.bind(null, bookmarklet),
@@ -178,19 +204,15 @@ function createContextMenuItems(bookmarklet, parentContextMenuID, flat = false){
  * @returns Promise
  */
 function updateContextMenu(){
-	return browser.storage.local.get(PREF_FLAT_CONTEXT_MENU).then(result => {
-		let flat = Boolean(result[PREF_FLAT_CONTEXT_MENU]);
-		return gettingBookmarkletTree.then(bookmarklets => createAllContextMenuItems(bookmarklets, flat));
-	})
+	return Promise.all([gettingBookmarkletTree, gettingFlatPref]).then(([bookmarklets, flat]) => createAllContextMenuItems(bookmarklets, flat));
 }
 
 /**
- * Update all data: the bookmarklet tree and context menu items
+ * Get the bookmarklet tree
  * @returns Promise
  */
-function update(){
-	gettingBookmarkletTree = browser.bookmarks.getTree().then(bookmarks => [getBookmarkletTree(bookmarks[0])]);
-	return updateContextMenu();
+function getBookmarkletTreePromise(){
+	return browser.bookmarks.getTree().then(bookmarks => [getBookmarkletTree(bookmarks[0])]);
 }
 
 /**
@@ -204,12 +226,16 @@ function updateDebounced(){
 	
 	updateTimeoutID = setTimeout(() => {
 		updateTimeoutID = 0;
-		update.apply(this);
+		gettingBookmarkletTree = gettingBookmarkletTree();// update bookmarklet tree
+		updateContextMenu();
 	}, BOOKMARK_TREE_CHANGES_DELAY);
 }
 
 let updateTimeoutID = 0;
-let gettingBookmarkletTree = null//Promise.reject("Not initialized");
+// Promise for flat context menu perference
+var gettingFlatPref = browser.storage.local.get(PREF_FLAT_CONTEXT_MENU).then(result => Boolean(result[PREF_FLAT_CONTEXT_MENU]));
+// Promise for bookmarklet tree. The first time is set, enable browser action
+var gettingBookmarkletTree = getBookmarkletTreePromise().then(bookmarklets => (browser.browserAction.enable(), bookmarklets));
 
 // Inert context menu (disabled). Wait bookmarks retrival
 browser.contextMenus.create({
@@ -218,6 +244,8 @@ browser.contextMenus.create({
 	contexts: ["all"],
 	enabled: false
 });
+// Disable browser action. Wait bookmarks retrival
+browser.browserAction.disable();
 
 // Add bookmark tree changes event listeners
 // Don't handle onImportBegan and onImportEnded, but because we debounce (delay) update, it should be fine
@@ -233,8 +261,6 @@ browser.contextMenus.create({
 	}
 }
 
-update();
-
 // Listen preferences changes
 browser.storage.onChanged.addListener((changes, areaName) => {
 	// Ignore all others storage areas
@@ -244,6 +270,10 @@ browser.storage.onChanged.addListener((changes, areaName) => {
 	
 	let flatPrefChange = changes[PREF_FLAT_CONTEXT_MENU];
 	if(flatPrefChange && flatPrefChange.oldValue != flatPrefChange.newValue){
-		updateContextMenu();
+		gettingFlatPref = Promise.resolve(Boolean(flatPrefChange.newValue));
+		update();
 	}
-})
+});
+
+// Start
+updateContextMenu();
