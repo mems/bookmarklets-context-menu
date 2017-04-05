@@ -25,6 +25,12 @@
       "page": "options/options.html",
       "browser_style": true
   },
+
+  "browser_action": {
+    "default_icon": "icons/bookmarklet.svg",
+    "default_popup": "popup/action.html",
+    "browser_style": true
+  },
   
   "applications": {
     "gecko": {
