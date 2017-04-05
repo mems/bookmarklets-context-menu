@@ -6,14 +6,22 @@ This extension is available for [Firefox (via AMO)](https://addons.mozilla.org/f
 
 [Current browsers' implementations of bookmarklets are broken](#why-current-browsers-implementations-of-bookmarklets-are-broken): bookmarklet are executed as author's script, but should be executed as user's scripts (with higher pivileges).
 
-To circumvent this restrictions, the extension _Bookmarklets context menu_ create a context menu with all bookmarklets available from user's bookmarks and executed it on demand as [content script](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Content_scripts). This allow access to a secured isolated environement, with higher privileges than author's scripts.
+To circumvent this restrictions, the extension _Bookmarklets context menu_ create a context menu with all bookmarklets available from user's bookmarks and executed it on demand as [content script](https://developer.mozilla.org/Add-ons/WebExtensions/Content_scripts). This allow access to a secured isolated environement, with higher privileges than author's scripts.
 
 This context is defined as:
 
 - `this` (global) is an extended `Window` object, include a small subset of WebExtension APIs and [DOM object `wrappedJSObject` property](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Content_scripts#Accessing_page_script_objects_from_content_scripts): `const Sandbox = {browser, chrome, ...window}`
 - `self` is the same as `window`, the top frame's global object
 
-Note: **CSP still applied on subresources** (dependencies). That means with a super strict CSP "none", you can't use other scripts, styles nor medias
+Note: **CSP still applied on subresources** (dependencies). That means with a super strict CSP "none", you can't use other scripts, styles nor medias.
+
+If you need to load a resource, use an create an iframe with an "unique origin" ([`allow-same-origin` disabled](https://developer.mozilla.org/docs/Web/HTML/Element/iframe#attr-sandbox)):
+
+	// On a page with a strict CSP like `default-src 'self'`	
+	let iframe = document.createElement("iframe");
+	iframe.srcdoc = `<html><head><script src="https://code.jquery.com/jquery-latest.min.js"></script></head><body><script>$(document.body).text("Hello from jQuery")</script><img src="https://fr.wikipedia.org/static/images/project-logos/enwiki.png" alt="Wikipedia logo"></body></html></iframe>`;
+	iframe.sandbox = "allow-scripts";
+	document.body.appendChild(iframe);
 
 ## Why current browsers' implementations of bookmarklets are broken?
 
@@ -31,7 +39,7 @@ See also [Wiki pages](https://github.com/mems/bookmarklets-context-menu/wiki)
 This doesn't fix broken implementations. It's just an alternative.
 
 - work well on Firefox Desktop, untested on Chrome and any other browser
-- [Edge don't support bookmarks WebExtension API](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/API/bookmarks#Browser_compatibility)
+- [Edge don't support bookmarks WebExtension API](https://developer.mozilla.org/Add-ons/WebExtensions/API/bookmarks#Browser_compatibility)
 - options UI looks ugly, see [1275287 - Implement `chrome_style` in options V2 API.](https://bugzilla.mozilla.org/show_bug.cgi?id=1275287)
 
 ## Permissions required
@@ -41,7 +49,7 @@ The following permissions are used by the extension:
 - `bookmarks`: read the bookmark tree to get all bookmarklets
 - `contextMenus`: create context menus based on bookmarklets founded in bookmarks
 - `activeTab`: execute bookmarklet script in the active tab
-- `clipboardWrite`: allow to use [`document.execCommand('cut'/'copy')`](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Interact_with_the_clipboard) in bookmarklets
+- `clipboardWrite`: allow to use [`document.execCommand('cut'/'copy')`](https://developer.mozilla.org/Add-ons/WebExtensions/Interact_with_the_clipboard) in bookmarklets
 - `storage`: store some preferences like "flat context menu"
 - `<all_urls>`: allow bookmarklets to perform `fetch()` or `XMLHttpRequest` without crossdomain limitations
 
