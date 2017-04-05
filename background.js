@@ -140,30 +140,22 @@ function createAllContextMenuItems(bookmarklets, flat = false){
 		return;
 	}
 
-	let emptyParent = true;
 	// If only one folder (or folder group) list direcly its children
 	if(bookmarkletsRoot instanceof BookmarkletFolder){
-		for(let child of bookmarkletsRoot.children){
-			createContextMenuItems(child, parentID, flat, emptyParent);
-			emptyParent = true;
-		}
+		createContextMenuItemsList(bookmarkletsRoot.children, parentID, flat);
 	} else {
-		createContextMenuItems(bookmarkletsRoot, parentID, flat, emptyParent);
+		createContextMenuItems(bookmarkletsRoot, parentID, flat);
 	}
 }
 
 /**
  * Create a context menu entry for the given bookmarklet
  */
-function createContextMenuItems(bookmarklet, parentContextMenuID, flat = false, emptyParent = true){
+function createContextMenuItems(bookmarklet, parentContextMenuID, flat = false){
 	// If a folder of bookmarklets
 	if(bookmarklet instanceof BookmarkletFolder){
 		let parentID = parentContextMenuID;
 		let children = bookmarklet.children;
-		
-		if(children.length == 0){
-			return;
-		}
 		
 		if(!flat){
 			parentID = browser.contextMenus.create({
@@ -171,22 +163,9 @@ function createContextMenuItems(bookmarklet, parentContextMenuID, flat = false, 
 				parentId: parentContextMenuID,
 				contexts: ["all"]
 			});
-			emptyParent = true;
 		}
 		
-		if(flat && emptyParent){
-			browser.contextMenus.create({
-				type: "separator",
-				parentId: parentContextMenuID,
-				contexts: ["all"]
-			});
-			emptyParent = false;
-		}
-		
-		for(let child of children){
-			createContextMenuItems(child, parentID, flat, emptyParent);
-			emptyParent = true;
-		}
+		createContextMenuItemsList(children, parentID, flat);
 		
 		return;
 	}
@@ -196,6 +175,24 @@ function createContextMenuItems(bookmarklet, parentContextMenuID, flat = false, 
 		parentId: parentContextMenuID,
 		onclick: contextMenuItemClick.bind(null, bookmarklet),
 		contexts: ["all"]
+	});
+}
+
+/**
+ * Create context menu entries for an array of bookmarklets
+ */
+function createContextMenuItemsList(bookmarklets, parentID, flat){
+	bookmarklets.forEach((bookmarklet, index, bookmarklets) => {
+		// if not first one and is folder or the previous is a folder
+		if(index > 0 && (bookmarklet instanceof BookmarkletFolder || bookmarklets[index - 1] instanceof BookmarkletFolder)){
+			browser.contextMenus.create({
+				type: "separator",
+				parentId: parentID,
+				contexts: ["all"]
+			});
+		}
+		
+		createContextMenuItems(bookmarklet, parentID, flat)
 	});
 }
 
@@ -226,7 +223,7 @@ function updateDebounced(){
 	
 	updateTimeoutID = setTimeout(() => {
 		updateTimeoutID = 0;
-		gettingBookmarkletTree = gettingBookmarkletTree();// update bookmarklet tree
+		gettingBookmarkletTree = getBookmarkletTreePromise();// update bookmarklet tree
 		updateContextMenu();
 	}, BOOKMARK_TREE_CHANGES_DELAY);
 }
