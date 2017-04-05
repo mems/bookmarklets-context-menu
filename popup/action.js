@@ -2,7 +2,22 @@
 
 var browser = browser || chrome;//for Chrome
 
-// Don't need to listen preference change, the user should do it manually. Navigate between panels/tabs autohide popups
+function createPanelListItem(label){
+	// insertAdjacentHTML is considered unsafe by AMO when concatenated with variables
+	/*
+	<div class="panel-list-item">
+		<div class="text">${label}</div>
+	</div>`
+	*/
+	let root = document.createElement("div");
+	root.classList.add("panel-list-item");
+	let text = document.createElement("div");
+	text.classList.add("text");
+	text.textContent = label;
+	root.appendChild(text);
+	
+	return root;
+}
 
 /**
  * Create all context menu for the given bookmarklet tree
@@ -24,9 +39,7 @@ function createAllContextMenuItems(bookmarklets, flat = false){
 	let bookmarkletsRoot = bookmarklets[0];
 	// If no bookmarklets
 	if(!bookmarkletsRoot || bookmarkletsRoot instanceof backgroundWindow.BookmarkletFolder && bookmarkletsRoot.children.length == 0){
-		parent.insertAdjacentHTML("beforeend", `<div class="panel-list-item">
-				<div class="text">${browser.i18n.getMessage("contextMenuItemEmpty")}</div>
-			</div>`);
+		parent.appendChild(createPanelListItem(browser.i18n.getMessage("contextMenuItemEmpty")));
 		return;
 	}
 	
@@ -53,9 +66,7 @@ function createContextMenuItems(bookmarklet, parentContextMenu, flat = false){
 		
 		if(!flat){
 			// TODO, add panel?
-			parentContextMenu.insertAdjacentHTML("beforeend", `<div class="panel-list-item">
-					<div class="text">${bookmarklet.title}</div>
-				</div>`);
+			parentContextMenu.appendChild(createPanelListItem(bookmarklet.title));
 			parent = parentContextMenu.lastChild;
 		}
 		
@@ -64,9 +75,7 @@ function createContextMenuItems(bookmarklet, parentContextMenu, flat = false){
 		return;
 	}
 	
-	parentContextMenu.insertAdjacentHTML("beforeend", `<div class="panel-list-item">
-			<div class="text">${bookmarklet.title}</div>
-		</div>`);
+	parentContextMenu.appendChild(createPanelListItem(bookmarklet.title));
 	parentContextMenu.lastChild.addEventListener("click", contextMenuItemClick.bind(null, bookmarklet));
 }
 
