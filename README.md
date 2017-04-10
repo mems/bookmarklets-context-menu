@@ -15,6 +15,10 @@ This context is defined as:
 
 Note: **CSP still applied on subresources** (dependencies). That means with a super strict CSP "none", you can't use other scripts, styles nor medias.
 
+If the page block the context menu, you can use the browser action of context menu:
+
+![Firefox capture of Bookmarklets context menu: Browser action highlighted](capture_firefox_browser_action.png)
+
 If you need to load a resource, use an create an iframe with an "unique origin" ([`allow-same-origin` disabled](https://developer.mozilla.org/docs/Web/HTML/Element/iframe#attr-sandbox)):
 
 	// On a page with a strict CSP like `default-src 'self'`	
