@@ -38,6 +38,10 @@ window.Bookmarklet = Bookmarklet;
 window.BookmarkletFolder = BookmarkletFolder;
 window.BookmarkletFolderGroup = BookmarkletFolderGroup;
 
+function logRejection(context, reason){
+	console.log(`${context} promise has been rejected: ${reason}`);
+}
+
 /**
  * Create bookmarklet tree from given bookmark
  * @returns {Bookmarklet|BookmarkletFolder|BookmarkletFolderGroup|null}
@@ -125,7 +129,7 @@ function executeBookmarklet(bookmarklet){
 			code: `location = "data:text/html;charset=utf-8,${encodeURIComponent(topFrameRetunValue)}";`,
 			runAt: "document_start"
 		});
-	});
+	}, logRejection.bind(null, "bookmarklet execution"));
 }
 
 /**
@@ -215,7 +219,7 @@ function createContextMenuItemsList(bookmarklets, parentID, flat){
  * @returns Promise
  */
 function updateContextMenu(){
-	return Promise.all([gettingBookmarkletTree, gettingFlatPref]).then(([bookmarklets, flat]) => createAllContextMenuItems(bookmarklets, flat));
+	return Promise.all([gettingBookmarkletTree, gettingFlatPref]).then(([bookmarklets, flat]) => createAllContextMenuItems(bookmarklets, flat), logRejection.bind(null, "update context menu"));
 }
 
 /**
@@ -223,7 +227,7 @@ function updateContextMenu(){
  * @returns Promise
  */
 function getBookmarkletTreePromise(){
-	return browser.bookmarks.getTree().then(bookmarks => [getBookmarkletTree(bookmarks[0])]);
+	return browser.bookmarks.getTree().then(bookmarks => [getBookmarkletTree(bookmarks[0])], logRejection.bind(null, "get bookmarklets tree"));
 }
 
 /**
@@ -244,7 +248,7 @@ function updateDebounced(){
 
 let updateTimeoutID = 0;
 // Promise for flat context menu perference
-var gettingFlatPref = browser.storage.local.get(PREF_FLAT_CONTEXT_MENU).then(result => Boolean(result[PREF_FLAT_CONTEXT_MENU]));
+var gettingFlatPref = browser.storage.local.get(PREF_FLAT_CONTEXT_MENU).then(result => Boolean(result[PREF_FLAT_CONTEXT_MENU]), logRejection.bind(null, "get preferences"));
 // Promise for bookmarklet tree. The first time is set, enable browser action
 var gettingBookmarkletTree = getBookmarkletTreePromise().then(bookmarklets => (browser.browserAction.enable(), bookmarklets));
 

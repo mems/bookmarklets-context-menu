@@ -19,6 +19,10 @@ function createPanelListItem(label){
 	return root;
 }
 
+function logRejection(context, reason){
+	console.log(`${context} promise has been rejected: ${reason}`);
+}
+
 /**
  * Create all context menu for the given bookmarklet tree
  */
@@ -115,4 +119,4 @@ Promise.all([domContentLoaded, browser.runtime.getBackgroundPage()]).then(([domC
 	backgroundWindow = pageWindow;
 	//return Promise.all(pageWindow.gettingBookmarkletTree, pageWindow.gettingFlatPref).then(([bookmarklets, flat]) => createAllContextMenuItems(bookmarklets, flat));
 	return pageWindow.gettingBookmarkletTree.then(bookmarklets => createAllContextMenuItems(bookmarklets, true));// TODO support non flat tree
-});
+}, logRejection.bind(null, "get background page"));
