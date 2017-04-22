@@ -264,7 +264,7 @@ browser.browserAction.disable();
 	const bookmarks = browser.bookmarks;
 	for(let event of BOOKMARK_TREE_CHANGES_EVENTS){
 		// Event not supported
-		if(typeof bookmarks === "undefined" || typeof bookmarks[event].addListener !== "function"){
+		if(typeof bookmarks[event] === "undefined" || typeof bookmarks[event].addListener !== "function"){
 			continue;
 		}
 		
