@@ -2,8 +2,10 @@
 
 var browser = browser || chrome;//for Chrome
 
-function createPanelListItem(label){
-	// insertAdjacentHTML is considered unsafe by AMO when concatenated with variables
+// Note: insertAdjacentHTML is considered unsafe by AMO when concatenated with variables
+
+// panelListItemTemplate
+{
 	/*
 	<div class="panel-list-item">
 		<div class="text">${label}</div>
@@ -13,10 +15,53 @@ function createPanelListItem(label){
 	root.classList.add("panel-list-item");
 	let text = document.createElement("div");
 	text.classList.add("text");
-	text.textContent = label;
 	root.appendChild(text);
+	const panelListItemTemplate = root;
+}
+
+// panelTemplate
+{
+	/*
+	<div class="panel">
+		<div class="panel-section panel-section-list"></div>
+	</div>
+	*/
+	let root = document.createElement("div");
+	root.clasList.add("panel");
+	let section = document.createElement("div");
+	section.classList.add("panel-section", "panel-section-list");
+	root.appendChild(section);
+	const panelTemplate = root;
+}
+
+// separatorTemplate
+{
+	/*
+	<div class="panel-section-separator"></div>
+	*/
+	let root = document.createElement("div");
+	root.clasList.add("panel-section-separator");
+	const separatorTemplate = root;
+}
+
+
+function createPanelListItem(label){
+	let element = panelListItemTemplate.cloneNode();
+	element.querySelector(".text").textContent = label;
 	
-	return root;
+	return element;
+}
+
+function createPanel(){
+	let element = panelTemplate.cloneNode();
+	
+	return element;
+}
+
+function createSeparator(){
+	let element = separatorTemplate.cloneNode();
+	
+	return element;
 }
 
 function logRejection(context, reason){
@@ -35,9 +80,7 @@ function createAllContextMenuItems(bookmarklets, flat = false){
 	}
 	
 	// Create pannel
-	body.insertAdjacentHTML("beforeend", `<div class="panel">
-			<div class="panel-section panel-section-list"></div>
-		</div>`);
+	body.appendChild(createPanel());
 	let parent = body.lastChild.querySelector(".panel-section-list")
 	
 	let bookmarkletsRoot = bookmarklets[0];
@@ -90,7 +133,7 @@ function createContextMenuItemsList(bookmarklets, parent, flat){
 	bookmarklets.forEach((bookmarklet, index, bookmarklets) => {
 		// if not first one and is folder or the previous is a folder
 		if(index > 0 && (bookmarklet instanceof backgroundWindow.BookmarkletFolder || bookmarklets[index - 1] instanceof backgroundWindow.BookmarkletFolder)){
-			parent.insertAdjacentHTML("beforeend", `<div class="panel-section-separator"></div>`);
+			parent.appendChild(createSeparator());
 		}
 		
 		createContextMenuItems(bookmarklet, parent, flat)
