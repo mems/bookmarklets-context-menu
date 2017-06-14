@@ -53,7 +53,7 @@ The following permissions are used by the extension:
 - `bookmarks`: read the bookmark tree to get all bookmarklets
 - `contextMenus`: create context menus based on bookmarklets founded in bookmarks
 - `activeTab`: execute bookmarklet script in the active tab
-- `clipboardWrite`: allow to use [`document.execCommand('cut'/'copy')`](https://developer.mozilla.org/Add-ons/WebExtensions/Interact_with_the_clipboard) in bookmarklets
+- `clipboardWrite` and `clipboardRead`: allow to use [`document.execCommand('cut'/'copy'/'paste')`](https://developer.mozilla.org/Add-ons/WebExtensions/Interact_with_the_clipboard) in bookmarklets
 - `storage`: store some preferences like "flat context menu"
 - `<all_urls>`: allow bookmarklets to perform `fetch()` or `XMLHttpRequest` without crossdomain limitations
 
