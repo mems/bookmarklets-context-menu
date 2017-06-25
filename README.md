@@ -13,19 +13,19 @@ This context is defined as:
 - `this` (global) is an extended `Window` object, include a small subset of WebExtension APIs and [DOM object `wrappedJSObject` property](https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Content_scripts#Accessing_page_script_objects_from_content_scripts): `const Sandbox = {browser, chrome, ...window}`
 - `self` is the same as `window`, the top frame's global object
 
-Note: **CSP still applied on subresources** (dependencies). That means with a super strict CSP "none", you can't use other scripts, styles nor medias.
+Note: **CSP still applied to subresources** (like scripts, styles, medias, etc.). That means with a super strict CSP "none", you can't use any scripts, styles nor medias.
 
-If the page block the context menu, you can use the browser action of context menu:
-
-![Firefox capture of Bookmarklets context menu: Browser action highlighted](capture_firefox_browser_action.png)
-
-If you need to load a resource, use an create an iframe with an "unique origin" ([`allow-same-origin` disabled](https://developer.mozilla.org/docs/Web/HTML/Element/iframe#attr-sandbox)):
+If you need to load a resource, create an iframe with an "unique origin" ([`allow-same-origin` disabled](https://developer.mozilla.org/docs/Web/HTML/Element/iframe#attr-sandbox)):
 
 	// On a page with a strict CSP like `default-src 'self'`	
 	let iframe = document.createElement("iframe");
 	iframe.srcdoc = `<html><head><script src="https://code.jquery.com/jquery-latest.min.js"></script></head><body><script>$(document.body).text("Hello from jQuery")</script><img src="https://fr.wikipedia.org/static/images/project-logos/enwiki.png" alt="Wikipedia logo"></body></html></iframe>`;
 	iframe.sandbox = "allow-scripts";
 	document.body.appendChild(iframe);
+
+If the page block the context menu, you can use the browser action of context menu:
+
+![Firefox capture of Bookmarklets context menu: Browser action highlighted](capture_firefox_browser_action.png)
 
 ## Why current browsers' implementations of bookmarklets are broken?
 
@@ -34,7 +34,7 @@ If you need to load a resource, use an create an iframe with an "unique origin" 
 — [HTML Design Principles](https://www.w3.org/TR/html-design-principles/#priority-of-constituencies)
 
 With current implementation, bookmarklet usage is restricted because bookmarklets are not executed as privileged scripts, but as author's script.
-That means bookmarklet are subject to security measures like <abbr title="Content Security Policy">CSP</abbr> and <abbr title="Cross-Origin Resource Sharing">CORS</abbr> which make it use difficile or impossible in some cases.
+That means bookmarklet are subject to security measures like <abbr title="Content Security Policy">CSP</abbr> and <abbr title="Cross-Origin Resource Sharing">CORS</abbr> which make it difficulte to use or impossible in some cases.
 
 See also [Wiki pages](https://github.com/mems/bookmarklets-context-menu/wiki)
 
