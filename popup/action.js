@@ -27,7 +27,7 @@ var browser = browser || chrome;//for Chrome
 	</div>
 	*/
 	let root = document.createElement("div");
-	root.clasList.add("panel");
+	root.classList.add("panel");
 	let section = document.createElement("div");
 	section.classList.add("panel-section", "panel-section-list");
 	root.appendChild(section);
@@ -40,7 +40,7 @@ var browser = browser || chrome;//for Chrome
 	<div class="panel-section-separator"></div>
 	*/
 	let root = document.createElement("div");
-	root.clasList.add("panel-section-separator");
+	root.classList.add("panel-section-separator");
 	const separatorTemplate = root;
 }
 
