@@ -56,20 +56,20 @@ function getPanelTemplate() {
 
 
 function createPanelListItem(label){
-	let element = getPanelListItemTemplate().cloneNode();
+	let element = getPanelListItemTemplate().cloneNode(true);
 	element.querySelector(".text").textContent = label;
 	
 	return element;
 }
 
 function createPanel(){
-	let element = getPanelTemplate().cloneNode();
+	let element = getPanelTemplate().cloneNode(true);
 	
 	return element;
 }
 
 function createSeparator(){
-	let element = separatorTemplate.cloneNode();
+	let element = separatorTemplate.cloneNode(true);
 	
 	return element;
 }
