@@ -45,13 +45,17 @@ function getPanelTemplate() {
 }
 
 // separatorTemplate
-{
+function getSeparatorTemplate() {
 	/*
 	<div class="panel-section-separator"></div>
 	*/
-	let root = document.createElement("div");
-	root.classList.add("panel-section-separator");
-	const separatorTemplate = root;
+	if (!templates.separator) {
+		let root = document.createElement("div");
+		root.classList.add("panel-section-separator");
+		templates.separator = root;
+	}
+
+	return templates.separator;
 }
 
 
@@ -69,7 +73,7 @@ function createPanel(){
 }
 
 function createSeparator(){
-	let element = separatorTemplate.cloneNode(true);
+	let element = getSeparatorTemplate.cloneNode(true);
 	
 	return element;
 }
