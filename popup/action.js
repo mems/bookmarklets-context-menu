@@ -4,34 +4,44 @@ var browser = browser || chrome;//for Chrome
 
 // Note: insertAdjacentHTML is considered unsafe by AMO when concatenated with variables
 
+const templates = {};
+
 // panelListItemTemplate
-{
+function getPanelListItemTemplate() {
 	/*
 	<div class="panel-list-item">
 		<div class="text">${label}</div>
 	</div>`
 	*/
-	let root = document.createElement("div");
-	root.classList.add("panel-list-item");
-	let text = document.createElement("div");
-	text.classList.add("text");
-	root.appendChild(text);
-	const panelListItemTemplate = root;
+	if (!templates.panelListItem) {
+		let root = document.createElement("div");
+		root.classList.add("panel-list-item");
+		let text = document.createElement("div");
+		text.classList.add("text");
+		root.appendChild(text);
+		templates.panelListItem = root;
+	}
+
+	return templates.panelListItem;
 }
 
 // panelTemplate
-{
+function getPanelTemplate() {
 	/*
 	<div class="panel">
 		<div class="panel-section panel-section-list"></div>
 	</div>
 	*/
-	let root = document.createElement("div");
-	root.classList.add("panel");
-	let section = document.createElement("div");
-	section.classList.add("panel-section", "panel-section-list");
-	root.appendChild(section);
-	const panelTemplate = root;
+	if (!templates.panel) {
+		let root = document.createElement("div");
+		root.classList.add("panel");
+		let section = document.createElement("div");
+		section.classList.add("panel-section", "panel-section-list");
+		root.appendChild(section);
+		templates.panel = root;
+	}
+
+	return templates.panel;
 }
 
 // separatorTemplate
@@ -46,14 +56,14 @@ var browser = browser || chrome;//for Chrome
 
 
 function createPanelListItem(label){
-	let element = panelListItemTemplate.cloneNode();
+	let element = getPanelListItemTemplate().cloneNode();
 	element.querySelector(".text").textContent = label;
 	
 	return element;
 }
 
 function createPanel(){
-	let element = panelTemplate.cloneNode();
+	let element = getPanelTemplate().cloneNode();
 	
 	return element;
 }
