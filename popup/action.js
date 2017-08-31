@@ -4,62 +4,76 @@ var browser = browser || chrome;//for Chrome
 
 // Note: insertAdjacentHTML is considered unsafe by AMO when concatenated with variables
 
+const templates = {};
+
 // panelListItemTemplate
-{
+function getPanelListItemTemplate() {
 	/*
 	<div class="panel-list-item">
 		<div class="text">${label}</div>
 	</div>`
 	*/
-	let root = document.createElement("div");
-	root.classList.add("panel-list-item");
-	let text = document.createElement("div");
-	text.classList.add("text");
-	root.appendChild(text);
-	const panelListItemTemplate = root;
+	if (!templates.panelListItem) {
+		let root = document.createElement("div");
+		root.classList.add("panel-list-item");
+		let text = document.createElement("div");
+		text.classList.add("text");
+		root.appendChild(text);
+		templates.panelListItem = root;
+	}
+
+	return templates.panelListItem;
 }
 
 // panelTemplate
-{
+function getPanelTemplate() {
 	/*
 	<div class="panel">
 		<div class="panel-section panel-section-list"></div>
 	</div>
 	*/
-	let root = document.createElement("div");
-	root.classList.add("panel");
-	let section = document.createElement("div");
-	section.classList.add("panel-section", "panel-section-list");
-	root.appendChild(section);
-	const panelTemplate = root;
+	if (!templates.panel) {
+		let root = document.createElement("div");
+		root.classList.add("panel");
+		let section = document.createElement("div");
+		section.classList.add("panel-section", "panel-section-list");
+		root.appendChild(section);
+		templates.panel = root;
+	}
+
+	return templates.panel;
 }
 
 // separatorTemplate
-{
+function getSeparatorTemplate() {
 	/*
 	<div class="panel-section-separator"></div>
 	*/
-	let root = document.createElement("div");
-	root.classList.add("panel-section-separator");
-	const separatorTemplate = root;
+	if (!templates.separator) {
+		let root = document.createElement("div");
+		root.classList.add("panel-section-separator");
+		templates.separator = root;
+	}
+
+	return templates.separator;
 }
 
 
 function createPanelListItem(label){
-	let element = panelListItemTemplate.cloneNode();
+	let element = getPanelListItemTemplate().cloneNode(true);
 	element.querySelector(".text").textContent = label;
 	
 	return element;
 }
 
 function createPanel(){
-	let element = panelTemplate.cloneNode();
+	let element = getPanelTemplate().cloneNode(true);
 	
 	return element;
 }
 
 function createSeparator(){
-	let element = separatorTemplate.cloneNode();
+	let element = getSeparatorTemplate.cloneNode(true);
 	
 	return element;
 }
