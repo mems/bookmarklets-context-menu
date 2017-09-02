@@ -2,64 +2,67 @@
 
 var browser = browser || chrome;//for Chrome
 
-// Note: insertAdjacentHTML is considered unsafe by AMO when concatenated with variables
+// Note: insertAdjacentHTML and innerHTML are considered unsafe by AMO when used with variables
 
-// panelListItemTemplate
-{
-	/*
-	<div class="panel-list-item">
-		<div class="text">${label}</div>
-	</div>`
-	*/
+/*
+Panel list item template
+
+<div class="panel-list-item">
+	<div class="text">${label}</div>
+</div>
+*/
+const panelListItemTemplate = (() => {
 	let root = document.createElement("div");
 	root.classList.add("panel-list-item");
 	let text = document.createElement("div");
 	text.classList.add("text");
 	root.appendChild(text);
-	const panelListItemTemplate = root;
-}
+	return root;
+})();
 
-// panelTemplate
-{
-	/*
-	<div class="panel">
-		<div class="panel-section panel-section-list"></div>
-	</div>
-	*/
+/*
+Panel template
+
+<div class="panel">
+	<div class="panel-section panel-section-list"></div>
+</div>
+*/
+const panelTemplate = (() => {
 	let root = document.createElement("div");
 	root.classList.add("panel");
 	let section = document.createElement("div");
 	section.classList.add("panel-section", "panel-section-list");
 	root.appendChild(section);
-	const panelTemplate = root;
-}
+	return root;
+})();
 
-// separatorTemplate
-{
-	/*
-	<div class="panel-section-separator"></div>
-	*/
+/*
+Separator template
+
+<div class="panel-section-separator"></div>
+*/
+const separatorTemplate = (() => {
 	let root = document.createElement("div");
 	root.classList.add("panel-section-separator");
-	const separatorTemplate = root;
-}
+	return root;
+})();
 
 
 function createPanelListItem(label){
-	let element = panelListItemTemplate.cloneNode();
+	let element = panelListItemTemplate.cloneNode(true);
 	element.querySelector(".text").textContent = label;
 	
 	return element;
 }
 
 function createPanel(){
-	let element = panelTemplate.cloneNode();
+	let element = panelTemplate.cloneNode(true);
 	
 	return element;
 }
 
 function createSeparator(){
-	let element = separatorTemplate.cloneNode();
+	let element = separatorTemplate.cloneNode(true);
 	
 	return element;
 }
@@ -161,5 +164,6 @@ let backgroundWindow = null;
 Promise.all([domContentLoaded, browser.runtime.getBackgroundPage()]).then(([domContentLoaded, pageWindow]) => {
 	backgroundWindow = pageWindow;
 	//return Promise.all(pageWindow.gettingBookmarkletTree, pageWindow.gettingFlatPref).then(([bookmarklets, flat]) => createAllContextMenuItems(bookmarklets, flat));
+	// TODO Support tree mode. Flat mode is forced until tree mode is supported
 	return pageWindow.gettingBookmarkletTree.then(bookmarklets => createAllContextMenuItems(bookmarklets, true));// TODO support non flat tree
 }, logRejection.bind(null, "get background page"));
