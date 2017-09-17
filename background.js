@@ -55,7 +55,7 @@ function getBookmarkletTree(bookmark){
 		if(url && url.startsWith("javascript:")){
 			let source;
 			try{
-				source = decodeURIComponent(url.slice(11)).trim()
+				source = decodeURIComponent(url.slice(11))
 			}catch(error){}
 			
 			if(source){
