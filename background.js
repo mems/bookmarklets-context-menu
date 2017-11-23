@@ -9,6 +9,7 @@ const FOLDERS_GROUP_TITLES_SEP = " ▸ ";
 const BOOKMARK_TREE_CHANGES_EVENTS = ["onCreated", "onRemoved", "onChanged", "onMoved", "onChildrenReordered"];
 const BOOKMARK_TREE_CHANGES_DELAY = 1000;//ms
 const PREF_FLAT_CONTEXT_MENU = "flatContextMenu";
+let invalidBookmarklets = new Set();
 
 //browser.runtime.lastError
 
@@ -56,7 +57,15 @@ function getBookmarkletTree(bookmark){
 			let source;
 			try{
 				source = decodeURIComponent(url.slice(11))
-			}catch(error){}
+			}
+			catch(error){
+				// error instanceof URIError)
+				// Show this error only once
+				if(!invalidBookmarklets.has(url)){
+					invalidBookmarklets.add(url);
+					console.warn(`The bookmark "${title}" contains invalid percent-encoding sequence.`);
+				}
+			}
 			
 			if(source){
 				return new Bookmarklet(source, title);
