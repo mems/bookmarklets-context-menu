@@ -114,7 +114,8 @@ function contextMenuItemClick(bookmarklet, data, tab){
  */
 function executeBookmarklet(bookmarklet){
 	let code = bookmarklet.source;
-	let escapedCodeForDbQuotes = code.replace(/(\\|")/g, "\\$1").replace(/\n/g, "\\n");//escaped code for injection in double quotes string (one line)
+	//escaped code for injection in double quotes string (one line)
+	let dbQuotesEscapedCode = code.replace(/(\\|")/g, "\\$1").replace(/\n/g, "\\n");
 
 	// The code can be an Expression or a Statment(s). The last instruction value will be used as return value
 	// Undeclared variables are always global in sloppy mode
@@ -124,48 +125,48 @@ function executeBookmarklet(bookmarklet){
 	// Firefox allow to execute code in 2 different contexts: content script or page. But the last one could be forbidden by the CSP
 	// https://developer.mozilla.org/en-US/Add-ons/WebExtensions/Content_scripts#Using_eval()_in_content_scripts
 	
+	const bookmarkletURI = `javascript:${encodeURIComponent(code)}`;
 	let contentScript = `
 	{
 		// Hide all global properties/function should not be available like .chrome or .browser WebExtension APIs
 		window.chrome = window.browser = undefined;
 		if(typeof chrome != "undefined") chrome = undefined;
 		if(typeof browser != "undefined") browser = undefined;
-		
-		// Declare function to import scripts
-		// See browser.tabs.executeScript()
-		/*
-		function importScripts(urls...){
-			for(let url of urls)
-			//code = xhr/fetch(url)
-			//eval(code)
-		}
-		*/
-		// See browser.tabs.insertCSS() and browser.tabs.removeCSS()
-		/*
-		function importStyles(urls...){
-			
-		}
-		*/
 
-		// Catch syntax error or any other API or custom errors
+		// Catch syntax error or any other API or thrown custom errors
 		let value;
+		// Use eval to get expression or statment result of the bookmarklet and define the sourceURL
 		try{
-			// Note: Chrome doesn't have secured scope https://developer.chrome.com/extensions/content_scripts#execution-environment
-			// Use strict mode to catch undeclared variable
-			value = eval("${escapedCodeForDbQuotes}\\n//# sourceURL=javascript:${encodeURIComponent(code)}");
+			// Note: Chrome doesn't have a secured scope (no window.wrappedJSObject.eval vs window.eval) https://developer.chrome.com/extensions/content_scripts#execution-environment
+			value = eval("${dbQuotesEscapedCode}\\n//# sourceURL=${bookmarkletURI}");
 		}catch(error){
-			eval(\`console.log("Bookmarklet error:\\\\n%o", error);\\n//# sourceURL=javascript:${encodeURIComponent(code)}\`);
+			// Remove stack part of internal (browser and extension)
+			const stack = error.stack.split("\\n").slice(0, -2).join("\\n");
+			wrappedJSObject.console.error(\`Bookmarklet error: $\{error.name\}: $\{error.message\}\\nStack trace:\\n$\{stack\}\`);
 		}
 	
-		// Handle returned value
+		// Handle returned value asynchronously:
+		// Wait a navigation event.
+		// If there is no navigation event, load a blob document with the returned value as document source
 		if(value !== undefined){
-			stop();// stop the document loading to allow document.write to erase the current DOM
-			var doc = wrappedJSObject.document;//document as unsecure
-			doc.open();
-			doc.write(value);
-			doc.close();
-			history.pushState("", null, "");// For Firefox, allow to go to the original page 
-			//location = \`data:text/html;charset=utf-8,\${encodeURIComponent(value)}\`;
+			const unloadHandler = event => {
+				window.removeEventListener("beforeunload", unloadHandler);
+				// If the event has been prevented (by the )
+				if(event.defaultPrevented){
+					return;
+				}
+				clearTimeout(timeoutID);
+			};
+			const timeoutHandler = () => {
+				var a = new Blob([value], {type: "text/html;charset=utf-8"});
+				// use blob instead of doc.open() write() close() which works only for HTML doc, not for XML (SVG) docs
+				window.location = URL.createObjectURL(a);
+			};
+			
+			// listen unload event to wait a potential navigation event
+			window.addEventListener("beforeunload", unloadHandler);
+			// and set timeout to 100ms as fallback
+			const timeoutID = setTimeout(timeoutHandler, 100);
 		}
 	}
 	`;
