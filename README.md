@@ -44,11 +44,11 @@ See also [Wiki pages](https://github.com/mems/bookmarklets-context-menu/wiki)
 
 This doesn't fix broken implementations. It's just an alternative.
 
-- work well on Firefox Desktop, untested on Chrome and any other browser
+- work well on Firefox Desktop, untested on Chrome and any other browser that support [WebExtension API](https://developer.mozilla.org/en-US/Add-ons/WebExtensions)
 - [Edge don't support bookmarks WebExtension API](https://developer.mozilla.org/Add-ons/WebExtensions/API/bookmarks#Browser_compatibility)
 - options UI looks ugly, see [1275287 - Implement `chrome_style` in options V2 API.](https://bugzilla.mozilla.org/show_bug.cgi?id=1275287)
 
-## Permissions required
+## Permissions required by the extension
 
 The following permissions are used by the extension:
 
@@ -71,9 +71,11 @@ An example of a bookmarklet that copy the document's title (`document.title`):
 
 An example of a bookmarklet that copy the page as [Markdown link](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#links):
 
-	javascript:{let%20d=document,u=d.URL,t="head%20title,h1,h2".split(",").map(s=>d.querySelector(s)).reduce((a,e)=>a||e&&e.textContent.replace(/\s+/g,"%20").trim(),"")||u,z=u.replace(/\(/g,"%2528").replace(/\)/g,"%2529"),l=e=>{let%20c=e.clipboardData,s=c.setData.bind(c);d.removeEventListener("copy",l);e.preventDefault();c.clearData();s("text/x-moz-url",u);s("text/uri-list",u);s("text/html",`<a%20href="${u}">${t.replace(/[&<>"']/g,m=>`&${{"&":"amp","<":"lt",">":"gt",'"':"quot","'":"apos"}[m]};`)}</a>`);s("text/plain",t==u?z:`[${t.replace(/([<>\[\]])/g,"\\$1")}](${z})`)};if(d.activeElement.tagName=="IFRAME"){let%20s=d.createElement("span");s.tabIndex=-1;s.style.position="fixed";d.body.appendChild(s);s.focus();s.remove()}d.addEventListener("copy",l);d.execCommand("copy");void(0)}
+	javascript:{let%20d=document,u=d.URL,t="head%20title,h1,h2".split(",").map(s=>d.querySelector(s)).reduce((a,e)=>a||e&&e.textContent.replace(/\s+/g,"%20").trim(),"")||u,z=u.replace(/\(/g,"%2528").replace(/\)/g,"%2529"),l=e=>{let%20c=e.clipboardData,s=c.setData.bind(c);d.removeEventListener("copy",l);e.preventDefault();c.clearData();s("text/x-moz-url",u);s("text/uri-list",u);s("text/html",`<a%20href="${u}">${t.replace(/[&<>"']/g,m=>`&${{"&":"amp","<":"lt",">":"gt",'"':"quot","'":"apos"}[m]};`)}</a>`);s("text/plain",t==u?z:`[${t.replace(/([\\<>\[\]])/g,"\\$1")}](${z})`)};if(d.activeElement.tagName=="IFRAME"){let%20s=d.createElement("span");s.tabIndex=-1;s.style.position="fixed";d.body.appendChild(s);s.focus();s.remove()}d.addEventListener("copy",l);d.execCommand("copy");void(0)}
 
-If you need `document.execCommand()`, be sure there is no iframe focused:
+If you get the following error `Bookmarklet error: SecurityError: The operation is insecure.`, that means you use `document.write(potentiallyUnsafeHTML)`, when you should use `wrappedJSObject.document.write(potentiallyUnsafeHTML)` instead. It's related to content script (privilegied) context vs page context.
+
+If you need `document.execCommand()`, be sure there is no element in / iframe focused:
 
 	// execCommand will not been executed if an iframe is focused
 	if(document.activeElement.tagName == "IFRAME"){
@@ -91,3 +93,9 @@ If you need `document.execCommand()`, be sure there is no iframe focused:
 	};
 	document.addEventListener("copy", listener);
 	document.execCommand("copy");// will dispatch copy event
+
+See also:
+
+- [Bookmarkleter](http://chriszarate.github.io/bookmarkleter/)
+- [Bookmarklet - Wikipedia](https://en.wikipedia.org/wiki/Bookmarklet#Concept)
+- [Create Bookmarklets - The Right Way](https://code.tutsplus.com/tutorials/create-bookmarklets-the-right-way--net-18154)
