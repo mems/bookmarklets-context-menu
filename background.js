@@ -149,24 +149,24 @@ function executeBookmarklet(bookmarklet){
 		// Wait a navigation event.
 		// If there is no navigation event, load a blob document with the returned value as document source
 		if(value !== undefined){
-			const unloadHandler = event => {
-				window.removeEventListener("beforeunload", unloadHandler);
-				// If the event has been prevented (by the )
+			const beforeUnload = event => {
+				window.removeEventListener("beforeunload", beforeUnload);
+				// If the event has been prevented (by other any script)
 				if(event.defaultPrevented){
 					return;
 				}
-				clearTimeout(timeoutID);
+				clearTimeout(timeout);
 			};
-			const timeoutHandler = () => {
-				var a = new Blob([value], {type: "text/html;charset=utf-8"});
+			const timeout = () => {
+				const blob = new Blob([value], {type: "text/html;charset=utf-8"});
 				// use blob instead of doc.open() write() close() which works only for HTML doc, not for XML (SVG) docs
-				window.location = URL.createObjectURL(a);
+				window.location = URL.createObjectURL(blob);
 			};
 			
 			// listen unload event to wait a potential navigation event
-			window.addEventListener("beforeunload", unloadHandler);
+			window.addEventListener("beforeunload", beforeUnload);
 			// and set timeout to 100ms as fallback
-			const timeoutID = setTimeout(timeoutHandler, 100);
+			const unloadTimeoutID = setTimeout(timeout, 100);
 		}
 	}
 	`;
