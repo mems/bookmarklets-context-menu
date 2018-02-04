@@ -15,7 +15,7 @@ This context is defined as:
 - `self` is the same as `window`, the top frame's global object
 -->
 
-Note: Prior [Firefox 58](https://groups.google.com/forum/m/#!msg/mozilla.dev.platform/EVKMSAY__lA/8b1ctuJgBwAJ), **CSP still applied to subresources** (like scripts, styles, medias, etc.). That means with a super strict CSP "none", you can't use any additional scripts, styles nor medias.
+Note: Prior [Firefox 58](https://bugzilla.mozilla.org/show_bug.cgi?id=1267027) ([Intent to implement](https://groups.google.com/forum/m/#!msg/mozilla.dev.platform/EVKMSAY__lA/8b1ctuJgBwAJ), [1406278](https://bugzilla.mozilla.org/show_bug.cgi?id=1406278)), **CSP still applied to subresources** (like scripts, styles, medias, etc.). That means with a super strict CSP "none", you can't use any additional scripts, styles nor medias.
 
 If you need to load a resource, create an iframe with an "unique origin" ([`allow-same-origin` disabled](https://developer.mozilla.org/docs/Web/HTML/Element/iframe#attr-sandbox)) or with a data URI (Firefox 57+, see https://bugzilla.mozilla.org/show_bug.cgi?id=1324406):
 
