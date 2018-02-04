@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>Bookmarklets and links</title>
+	</head>
+	<body>
+		<ul>
+			<li><a href="javascript:(function(){sq=window.sq=window.sq||{};if(sq.script){sq.again();}else{sq.bookmarkletVersion='0.3.0';sq.iframeQueryParams={host:'//squirt.io',userId:'d9dc51c1-8a5a-42dd-853a-a6ad49f52cdd',};sq.script=document.createElement('script');sq.script.src=sq.iframeQueryParams.host+'/bookmarklet/frame.outer.js';document.body.appendChild(sq.script);}})();">Squirt</a></li>
+			<li><a href="javascript:eval(&quot;console.log('ok')&quot;);">Eval + log</a></li>
+			<li><a href="javascript:void((function(d){if(self!=top||d.getElementById('toolbar')&amp;&amp;d.getElementById('toolbar').getAttribute('data-resizer'))return%20false;d.write('<!DOCTYPE%20HTML><html%20style=&quot;opacity:0;&quot;><head><meta%20charset=&quot;utf-8&quot;/></head><body><a%20data-viewport=&quot;320x480&quot;%20data-icon=&quot;mobile&quot;>Mobile%20(e.g.%20Apple%20iPhone)</a><a%20data-viewport=&quot;320x568&quot;%20data-icon=&quot;mobile&quot;%20data-version=&quot;5&quot;>Apple%20iPhone%205</a><a%20data-viewport=&quot;375%C3%97667&quot;%20data-icon=&quot;mobile&quot;%20data-version=&quot;7&quot;>Apple%20iPhone%207</a><a%20data-viewport=&quot;414%C3%97736&quot;%20data-icon=&quot;mobile&quot;%20data-version=&quot;7+&quot;>Apple%20iPhone%207%20Plus</a><a%20data-viewport=&quot;600x800&quot;%20data-icon=&quot;small-tablet&quot;>Small%20Tablet</a><a%20data-viewport=&quot;768x1024&quot;%20data-icon=&quot;tablet&quot;>Tablet%20(e.g.%20Apple%20iPad%202-3rd,%20mini)</a><a%20data-viewport=&quot;1280x800&quot;%20data-icon=&quot;notebook&quot;>Widescreen</a><a%20data-viewport=&quot;1920%C3%971080&quot;%20data-icon=&quot;tv&quot;>HDTV%201080p</a><script%20src=&quot;https://lab.maltewassermann.com/viewport-resizer/resizer.min.js&quot;></script></body></html>')})(document));">Viewport resizer</a></li>
+			<li><a href="javascript:&quot;use%20privileged&quot;;{let%20d=document,u=d.URL,t=&quot;head%20title,h1,h2&quot;.split(&quot;,&quot;).map(s=>d.querySelector(s)).reduce((a,e)=>a||e&amp;&amp;e.textContent.replace(/\s+/g,&quot;%20&quot;).trim(),&quot;&quot;)||u,z=u.replace(/\(/g,&quot;%2528&quot;).replace(/\)/g,&quot;%2529&quot;),l=e=>{let%20c=e.clipboardData,s=c.setData.bind(c);d.removeEventListener(&quot;copy&quot;,l);e.preventDefault();c.clearData();s(&quot;text/x-moz-url&quot;,u);s(&quot;text/uri-list&quot;,u);s(&quot;text/html&quot;,`<a%20href=&quot;${u}&quot;>${t.replace(/[&amp;<>&quot;']/g,m=>`&amp;${{&quot;&amp;&quot;:&quot;amp&quot;,&quot;<&quot;:&quot;lt&quot;,&quot;>&quot;:&quot;gt&quot;,'&quot;':&quot;quot&quot;,&quot;'&quot;:&quot;apos&quot;}[m]};`)}</a>`);s(&quot;text/plain&quot;,t==u?z:`[${t.replace(/([<>\[\]])/g,&quot;\\$1&quot;)}](${z})`)};if(d.activeElement.tagName==&quot;IFRAME&quot;){let%20s=d.createElement(&quot;span&quot;);s.tabIndex=-1;s.style.position=&quot;fixed&quot;;d.body.appendChild(s);s.focus();s.remove()}d.addEventListener(&quot;copy&quot;,l);d.execCommand(&quot;copy&quot;);console.log(&quot;copied&quot;);void(0)}">Clipboard write</a></li>
+			<li><a href="javascript:throw%20new%20Error(&quot;test%20error&quot;)">Throw error</a></li>
+			<li><a href="javascript:console.log(typeof%20browser%20!=%20&quot;undefined&quot;%20?%20browser%20:%20undefined,%20typeof%20chrome%20!=%20&quot;undefined&quot;%20?%20chrome%20:%20undefined)">Log browser and chrome</a></li>
+			<li><a href="javascript:console.log(&quot;test%20before%20return&quot;),&quot;test%20return&quot;">Log + string</a></li>
+			<li><a href="javascript:var%20{}">Syntax error</a></li>
+			<li><a href="javascript:{let%20a=alert;a(&quot;works&quot;)}">block scope</a></li>
+			<li><a href="javascript:{let%20a=alert;&quot;works&quot;}">block scope + string</a></li>
+			<li><a href="javascript:console.log(this, self, typeof%20$)">log this, self and typeof $</a></li>
+			<li><a href="javascript:void%20document.execCommand(&quot;copy&quot;)">clipoard copy</a></li>
+			<li><a href="javascript:location.replace('org-protocol:/capture?template=l&amp;url='+encodeURIComponent(location.href)+'&amp;title='+encodeURIComponent(document.title)+'&amp;body='+encodeURIComponent(window.getSelection()))">location replace with org-protocol:/</a></li>
+			<li><a href="javascript:var%20a=true;&quot;works&quot;">string</a></li>
+			<li><a href="javascript:var%20a=true;undefined">undefined</a></li>
+			<li><a href="javascript:location.href='https://web.archive.org/web/submit?type=urlquery&amp;url='+encodeURIComponent(window.location)">location setter</a></li>
+			<li><a href="javascript:(function%20a(){throw%20new%20Error(&quot;test&quot;)})()">error with stack</a></li>
+		</ul>
+		
+		<ul>
+			<li><a href="https://github.com/">SVG document</a></li>
+			<li><a href="https://upload.wikimedia.org/wikipedia/commons/0/02/SVG_logo.svg">document with strict CSP</a></li>
+		</ul>
+	</body>
+</html>
+
+
