@@ -115,7 +115,7 @@ function contextMenuItemClick(bookmarklet, data, tab){
 function executeBookmarklet(bookmarklet){
 	let code = bookmarklet.source;
 	//escaped code for injection in double quotes string (one line)
-	let dbQuotesEscapedCode = code.replace(/(\\|")/g, "\\$1").replace(/\n/g, "\\n");
+	let dbQuotesEscapedCode = code.replace(/[\\"]/g, "\\$&").replace(/\n/g, "\\n").replace(/\r/g, "\\r");
 
 	// The code can be an Expression or a Statment(s). The last instruction value will be used as return value
 	// Undeclared variables are always global in sloppy mode
