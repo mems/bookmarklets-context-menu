@@ -143,7 +143,7 @@ function executeBookmarklet(bookmarklet){
 		}catch(error){
 			// Remove stack part of internal (browser and extension)
 			const stack = error.stack.split("\\n").slice(0, -2).join("\\n");
-			wrappedJSObject.console.error(\`Bookmarklet error: $\{error.name\}: $\{error.message\}\\nStack trace:\\n$\{stack\}\`);
+			window.wrappedJSObject.console.error(\`Bookmarklet error: $\{error.name\}: $\{error.message\}\\nStack trace:\\n$\{stack\}\`);
 		}
 	
 		// Handle returned value asynchronously:
