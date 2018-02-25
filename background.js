@@ -138,6 +138,7 @@ function executeBookmarklet(bookmarklet){
 		// Use eval to get expression or statment result of the bookmarklet and define the sourceURL
 		try{
 			// Note: Chrome doesn't have a secured scope (no window.wrappedJSObject.eval vs window.eval) https://developer.chrome.com/extensions/content_scripts#execution-environment
+			// It's impossible to catch asynchronous errors (in listener, setTimeout, etc.) even with a global error handler
 			value = eval("${dbQuotesEscapedCode}\\n//# sourceURL=${bookmarkletURI}");
 		}catch(error){
 			// Remove stack part of internal (browser and extension)
