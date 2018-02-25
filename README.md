@@ -71,19 +71,21 @@ An example of a bookmarklet that copy the document's title (`document.title`):
 
 An example of a bookmarklet that copy the page as [Markdown link](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet#links):
 
-	javascript:{let%20d=document,u=d.URL,t="head%20title,h1,h2".split(",").map(s=>d.querySelector(s)).reduce((a,e)=>a||e&&e.textContent.replace(/\s+/g,"%20").trim(),"")||u,z=u.replace(/\(/g,"%2528").replace(/\)/g,"%2529"),l=e=>{let%20c=e.clipboardData,s=c.setData.bind(c);d.removeEventListener("copy",l);e.preventDefault();c.clearData();s("text/x-moz-url",u);s("text/uri-list",u);s("text/html",`<a%20href="${u}">${t.replace(/[&<>"']/g,m=>`&${{"&":"amp","<":"lt",">":"gt",'"':"quot","'":"apos"}[m]};`)}</a>`);s("text/plain",t==u?z:`[${t.replace(/([\\<>\[\]])/g,"\\$1")}](${z})`)};if(d.activeElement.tagName=="IFRAME"){let%20s=d.createElement("span");s.tabIndex=-1;s.style.position="fixed";d.body.appendChild(s);s.focus();s.remove()}d.addEventListener("copy",l);d.execCommand("copy");void(0)}
+	javascript:{let%20e=document,t=e.URL,n=Array.from(e.querySelectorAll("head%20title,h1,h2")).reduce((e,t)=>e||t&&t.textContent.replace(/s%20/g,"%20").trim(),"")||t,a=(e,t,n="",a="")=>e.replace(t,e=>n+e.charCodeAt(0).padStart(2,"0")+a),i=a(t,/[()]/g,"%25"),r=e.contentType.startsWith("image/"),[,c="Untitled"]=/\/([^/.]+$|[^/]+(?=\.[^.]*$))/g.exec(new%20URL(t).pathname)||[];c+="."+e.contentType.substr(6).split("+")[0];let%20o=l=>{let%20d=l.clipboardData,p=d.setData.bind(d);e.removeEventListener("copy",o),l.preventDefault(),d.clearData(),p("text/x-moz-url",t),p("text/uri-list",t),p("text/html",`<a%20href="${a(t,/"/g,"%25")}">${a(n,/[&<>]/g,"&",";")}</a>`),p("text/plain",r||n!==t?(r?"!":"")+"["+(r?c:n).replace(/[\<>[]]/g,"$&")+"]("+i+")":i)};if(["IFRAME","FRAME"].includes(e.activeElement.tagName)){let%20t=e.createElement("span");t.tabIndex=-1,t.setAttribute("aria-hidden","true"),t.style.position="fixed",e.documentElement.appendChild(t),t.focus(),t.remove()}e.addEventListener("copy",o),e.execCommand("copy")}void(0)
 
 If you get the following error `Bookmarklet error: SecurityError: The operation is insecure.`, that means you use `document.write(potentiallyUnsafeHTML)`, when you should use `wrappedJSObject.document.write(potentiallyUnsafeHTML)` instead. It's related to content script (privilegied) context vs page context.
 
+Note: It's impossible for the extension to catch asynchronous errors (in listener, setTimeout, etc.) even with a global error handler. You must use a `try...catch` block in your asynchronous functions. Alternatively you can use the add-ons debug mode [`about:debugging`](https://developer.mozilla.org/en-US/docs/Tools/about:debugging#Add-ons)
+
 If you need `document.execCommand()`, be sure there is no element in / iframe focused:
 
-	// execCommand will not been executed if an iframe is focused
-	if(document.activeElement.tagName == "IFRAME"){
+	// execCommand will not been executed if a frame or an iframe is focused
+	if(["IFRAME","FRAME"].includes(document.activeElement.tagName)){
 		let focusable = document.createElement("span");
 		focusable.tabIndex = -1;// focusable
 		focusable.setAttribute("aria-hidden", "true");// will not be announced by AT
 		focusable.style.position = "fixed";
-		document.body.appendChild(focusable);
+		document.documentElement.appendChild(focusable);// don't use doc.body because in case of frame the body is the frameset and execCommand will not work
 		focusable.focus();// force focus, but will not scroll into view, because it have fixed position
 		focusable.remove();// remove focus, without force to scroll into view to an other element
 	}
